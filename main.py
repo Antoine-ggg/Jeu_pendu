@@ -1,12 +1,10 @@
 # Initialisation des constantes
 import random
+import math
 
-NBR_VIE = 6
-life = NBR_VIE
-
+life = 6
 answer = ""
 answer_list = ["_"] * len(answer)
-replay = "O"
 clue = False
 
 
@@ -16,12 +14,12 @@ def main():
     while replay == "O":
         global answer, answer_list, clue
         answer = delete_accent(word_selection())
-        #print(answer)
+        print(answer)
         answer_list = ["_"] * (len(answer) - 1)
         initialisation_jeu(list_to_string(answer_list))
 
         while life > 0 and check_word() == False:
-            if life == 1 and clue == False:
+            if life == 1 and clue == False and answer_list.count("_") > 1:
                 give_clue()
             guess_letter()
 
@@ -75,7 +73,7 @@ def delete_accent(word_accent):
 def initialisation_jeu(word):
     print(f"""\n\nBienvenue au jeu du pendu. Un mot aléatoire a été sélectionner et votre but est de le trouver.
 Dite moi une lettre et je vous dirais si elle est présente dans le mot recherché.
-Le mot contient {len(word)} lettres et vous possédez {NBR_VIE} vies.
+Le mot contient {len(word)} lettres et vous possédez {life} vies.
 {list_to_string(answer_list)}\n""")
     return
 
@@ -88,7 +86,17 @@ def lose_life():
 
 def guess_letter():
     check = False
-    letter = str(input("\tChoississez une lettre que le mot pourrait contenir : "))
+    letter = "A"
+    while letter.isascii() is False or letter.islower() is False or len(letter) > 1:
+        letter = str(input("\tChoississez une lettre que le mot pourrait contenir : "))
+        if len (letter) > 1:
+            print(f"{letter} est plus long que un caractère. Veuillez entrée une seule lettre minuscule")
+        elif letter.isnumeric() is True:
+            print(f"{letter} est un chiffre. L'entrée doit être une lettre !")
+        elif letter.isupper() is True:
+            print(f"La lettre doit être une minuscule !")
+        else:
+            print(f"{letter} est un caractère spécial. Veuillez entrée une lettre minuscule du format ASCII !")
 
     for i in range(len(answer)):
         if answer[i] == letter:
@@ -143,7 +151,7 @@ def give_clue():
         if user_input not in ("O", "N"):
             print("Veuillez répondre par O pour oui ou N pour Non\n")
     if user_input == "O":
-        index = answer_list.index("_", random.randrange(len(answer_list)))
+        index = answer_list.index("_")
         answer_list[index] = answer[index]
         print(f"Le mot contient la lettre {answer[index]} ! "
               f"Le mot ressemble à ceci : {list_to_string(answer_list)} !")
