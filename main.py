@@ -1,37 +1,46 @@
-# Initialisation des constantes
+# Importation de la bibliothèque random
 import random
-import math
 
+
+# Initialisation des constantes et variables globales
 life = 6
 answer = ""
-answer_list = ["_"] * len(answer)
+answer_hidden = ["_"] * len(answer)
 clue = False
 
 
-def main():
-    replay = "O"
+# Ceci est la fonction d'execution principale
+def main(file = "mots_pendu.txt"):
+    global answer, answer_hidden, clue
+    replay_check = "O"
 
-    while replay == "O":
-        global answer, answer_list, clue
-        answer = delete_accent(word_selection())
-        print(answer)
-        answer_list = ["_"] * (len(answer) - 1)
-        initialisation_jeu(list_to_string(answer_list))
+    # Tant que le vérificateur de replay est à oui, on boucle
+    while replay_check == "O":
+        used_letter_list = []
+        answer = delete_accent(word_selection(file))
+        print(answer) # Affiche la réponse pour tester le programme
+        answer_hidden = ["_"] * (len(answer))
+        game_initialisation(list_to_string(answer_hidden))
 
-        while life > 0 and check_word() == False:
-            if life == 1 and clue == False and answer_list.count("_") > 1:
+        # On boucle tant que les tentatives sont supérieurs à 0 ET que la fonction check_word retourne faux
+        while life > 0 and check_for_underscore() == False:
+            # On vérifie si l'utilisateur rempli les conditions pour recevoir un indice
+            if life == 1 and clue == False and answer_hidden.count("_") > 1:
                 give_clue()
-            guess_letter()
+            guess_letter(used_letter_list)
 
-        if check_word() == True:
+        # On vérifie si l'utilisateur gagne ou s'il perd
+        if check_for_underscore() is True:
             print_win()
         else:
             print_lose()
 
-        replay = rejouer()
+        # On demande à l'utilisateur s'il veut rejouer
+        replay_check = replay()
     return
 
 
+# Cette fonction transforme une liste de lettre en str
 def list_to_string(word):
     word_str = ""
     for letters in word:
@@ -39,25 +48,19 @@ def list_to_string(word):
     return word_str
 
 
-def string_to_list(word):
-    word_list = []
-    for letters in word:
-        word_list.append(letters)
-    return word_list
+# Cette fonction sélectionne un mot aléatoire selon le fichier choisi par l'utilisateur
+def word_selection(file):
+    with open(file, "r", encoding='utf-8') as word_list:
+        lines = word_list.readlines()
+    num = random.randrange(len(lines))
+    return lines[num].strip()
 
 
-def word_selection():
-    file = "mots_pendu.txt"
-    word_list = open(file, "r", encoding='utf-8')
-    num = random.randrange(126)
-    answer = word_list.readlines()[num]
-    return answer
-
-
+# Cette fonction remplace les lettres avec des accents par des lettres simples.
 def delete_accent(word_accent):
-    word = string_to_list(word_accent)
+    word = list(word_accent)
     for i in range(len(word)):
-        if word[i] in ("à, â, ä"):
+        if word[i] in ("à","â","ä"):
             word[i] = "a"
         elif word[i] in ("é","è","ê","ë"):
             word[i] = "e"
@@ -70,59 +73,78 @@ def delete_accent(word_accent):
     return list_to_string(word)
 
 
-def initialisation_jeu(word):
-    print(f"""\n\nBienvenue au jeu du pendu. Un mot aléatoire a été sélectionner et votre but est de le trouver.
-Dite moi une lettre et je vous dirais si elle est présente dans le mot recherché.
-Le mot contient {len(word)} lettres et vous possédez {life} vies.
-{list_to_string(answer_list)}\n""")
+# Cette fonction initialise le jeu
+def game_initialisation(word):
+    print(f"\n\nBienvenue au jeu du pendu. Un mot aléatoire a été sélectionner et votre but est de le trouver.\n"
+          f"Dites moi une lettre et je vous dirais si elle est présente dans le mot recherché.\n"
+          f"Le mot contient {len(word)} lettres et vous possédez {life} tentatives.\n"
+          f"{list_to_string(answer_hidden)}\n")
     return
 
 
+# Cette fonction enlève une tentatives à l'utilisateur.
 def lose_life():
     global life
     life -= 1
     return
 
 
-def guess_letter():
+# Cette fonction vérifie si l'entrée est une lettre minuscule et si elle est dans le mot.
+def guess_letter(letter_list):
     check = False
     letter = "A"
-    while letter.isascii() is False or letter.islower() is False or len(letter) > 1:
-        letter = str(input("\tChoississez une lettre que le mot pourrait contenir : "))
-        if len (letter) > 1:
-            print(f"{letter} est plus long que un caractère. Veuillez entrée une seule lettre minuscule")
-        elif letter.isnumeric() is True:
-            print(f"{letter} est un chiffre. L'entrée doit être une lettre !")
-        elif letter.isupper() is True:
-            print(f"La lettre doit être une minuscule !")
-        else:
-            print(f"{letter} est un caractère spécial. Veuillez entrée une lettre minuscule du format ASCII !")
+    letter_list_check = True
 
+    # Boucle qui vérifie que l'entrée est valide
+    while (letter.isascii() is False or letter.islower() is False or len(letter) > 1) or letter_list_check is True:
+        letter_list_check = False
+        letter = str(input(f"\nVoici la liste des lettres déjà jouer : {letter_list}\n"
+                           f"Choisissez une lettre que le mot pourrait contenir : "))
+        if len (letter) > 1:
+            print(f"\n L'entrée {letter} est plus qu'un caractère. Veuillez entrée une seule lettre minuscule")
+        elif letter.isnumeric() is True:
+            print(f"\nL'entrée {letter} est un chiffre. L'entrée doit être une lettre !")
+        elif letter.isupper() is True:
+            print(f"\nL'entrée doit être une minuscule !")
+        elif letter.isalnum() is False:
+            print(f"\nL'entrée {letter} est un caractère spécial. Veuillez entrée une lettre minuscule du format ASCII !")
+        elif letter in letter_list:
+            print(f"\nLa lettre {letter} a déjà été nommée. Veuillez en choisir une autre")
+            letter_list_check = True
+        else:
+            letter_list.append(letter)
+
+    # Boucle qui vérifie si la lettre entrée est dans la réponse et mets à jour la
     for i in range(len(answer)):
         if answer[i] == letter:
-            answer_list[i] = letter
+            answer_hidden[i] = letter
             check = True
 
+    # Si le check passe, la console affiche un message qui confirme que la lettre est dans le mot, puis on retourne au main
     if check is True:
-        print(f"""\tBien joué ! La lettre {letter} est présente dans le mot recherché: {list_to_string(answer_list)}
-    Il vous reste {life} vies\n""")
+        print(f"\nBien joué ! La lettre {letter} est présente dans le mot recherché: {list_to_string(answer_hidden)}"
+              f"\nIl vous reste {life} tentatives).\n")
 
+    # Sinon, la console affiche un message qui infirme que la lettre est dans le mot, puis on retourne au main
     else:
         lose_life()
-        print(f"""\tDommage ... La lettre {letter} n'est pas présente dans le mot recherché: {list_to_string(answer_list)}
-    Il vous reste {life} vies\n""")
-    return answer_list
+        print(f"\nDommage ... La lettre {letter} n'est pas présente dans le mot recherché: {list_to_string(answer_hidden)}"
+              f"\nIl vous reste {life} tentatives).\n")
+    return answer_hidden
 
 
-def check_word():
-    for letters in answer_list:
+# Cette fonction vérifie si la réponse contient un souligné (_).
+def check_for_underscore():
+    for letters in answer_hidden:
         if letters == "_":
             return False
     return True
 
 
+# Cette fonction imprime dans la console un message de victoire.
 def print_win():
-    print(f"""Vous avez gagné ! Le mot rechercé était {answer}    ======================================================================================
+    print(f"""Vous avez gagné ! Le mot recherché était {answer}
+    ======================================================================================
       \\\\    //   =========   ||      ||      \\\\                //  ==========  ||\\\\     ||
        \\\\  //   ||       ||  ||      ||       \\\\              //       ||      ||  \\\\   ||
         \\\\//    ||       ||  ||      ||        \\\\    //\\\\    //        ||      ||   \\\\  ||
@@ -132,8 +154,10 @@ def print_win():
     return
 
 
+# Cette fonction imprime dans la console un message de défaite.
 def print_lose():
-    print(f"""Vous avez perdu ... Le mot était rechercé {answer}    ======================================================================================
+    print(f"""\nVous avez perdu ... Le mot était recherché {answer}
+    =====================================================================================
       \\\\    //  =========   ||      ||       ||         =========    ========   ========
        \\\\  //  ||       ||  ||      ||       ||        ||       ||  ||          ||      
         \\\\//   ||       ||  ||      ||       ||        ||       ||   ========   ||======
@@ -143,6 +167,7 @@ def print_lose():
     return
 
 
+# Cette fonction donne un indicé à l'utilisateur
 def give_clue():
     user_input = ""
     global answer, clue
@@ -151,15 +176,16 @@ def give_clue():
         if user_input not in ("O", "N"):
             print("Veuillez répondre par O pour oui ou N pour Non\n")
     if user_input == "O":
-        index = answer_list.index("_")
-        answer_list[index] = answer[index]
+        index = answer_hidden.index("_")
+        answer_hidden[index] = answer[index]
         print(f"Le mot contient la lettre {answer[index]} ! "
-              f"Le mot ressemble à ceci : {list_to_string(answer_list)} !")
+              f"Le mot ressemble à ceci : {list_to_string(answer_hidden)} !")
         clue = True
         return
 
 
-def rejouer():
+# Cette fonction demande à l'utilisateur s'il veut rejouer
+def replay():
     user_input = ""
     global clue, life
     life = 6
@@ -171,4 +197,5 @@ def rejouer():
     return user_input
 
 
+# Cette ligne appelle la fonction main, qui lance le code
 main()
