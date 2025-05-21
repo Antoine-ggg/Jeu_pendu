@@ -71,4 +71,4 @@ Le fichier texte qui contient les mots doit être dans le même format que celui
 
 Auteur
 ---------
-Projet de jeu du pendu écrit en Python par Antoine Ginras, le 21 mai 2025.
+Projet de jeu du pendu écrit en Python par Antoine Gingras, le 21 mai 2025.
