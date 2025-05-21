@@ -141,7 +141,7 @@ def check_for_underscore():
     return True
 
 
-# Cette fonction imprime dans la console un message de victoire.
+# Cette fonction imprime dans la console un message de succès.
 def print_win():
     print(f"""Vous avez gagné ! Le mot recherché était {answer}
     ======================================================================================
